@@ -23,22 +23,6 @@ def correct_predictions(output_probabilities, targets):
     return correct.item()
 
 
-def recall_at_k(output_probabilities, targets, k=1):
-    """
-    Compute the number of predictions that match some target classes in the
-    output of a model.
-
-    Args:
-        output_probabilities: A tensor of probabilities for different output
-            classes.
-        targets: The indices of the actual target classes.
-
-    Returns:
-        The number of correct predictions in 'output_probabilities'.
-    """
-    max_value, out_classes = output_probabilities.max(dim=1)
-
-
 def train(model, dataloader, optimizer, criterion, epoch_number, max_gradient_norm):
     """
     Train a model for one epoch on some input data with a given optimizer and
@@ -156,19 +140,18 @@ def validate(model, dataloader, criterion):
     return epoch_time, epoch_loss, epoch_accuracy
 
 
-def test(model, transformed_contexts, transformed_responses, labels):
+def test(model, dataloader, k=1):
     """
     Run inference once with batched transformed contexts and responses.
 
     Args:
         model: A torch module for which the loss and accuracy must be computed.
-        transformed_contexts: A DataLoader object to iterate over the validation data.
-        transformed_responses: A loss criterion to use for computing the loss.
+        dataloader: A DataLoader object to iterate over the test data.
+        k: An int to see if correct response appear in top k.
 
     Returns:
-        batch_time: The total time to compute the loss and accuracy on the batch.
-        batch_loss: The loss computed on the batch.
-        batch_accuracy: The accuracy computed on the batch.
+        epoch_time: The total time to compute the loss and accuracy on the batch.
+        epoch_accuracy: The accuracy computed on the entire validation set.
     """
 
     # Switch to evaluate mode.
@@ -176,19 +159,32 @@ def test(model, transformed_contexts, transformed_responses, labels):
     device = model.device
 
     epoch_start = time.time()
-    running_loss = 0.0
     running_accuracy = 0.0
 
+    # Deactivate autograd for evaluation.
     with torch.no_grad():
-        contexts = torch.tensor(transformed_contexts).to(device)
-        contexts_lengths = torch.tensor([len(s) for s in transformed_contexts]).to(device)
-        responses = torch.tensor(transformed_responses).to(device)
-        responses_lengths = torch.tensor([len(s) for s in transformed_responses]).to(device)
-        labels = torch.tensor(labels).to(device)
+        for batch in dataloader:
+            # Move input and output data to the GPU if one is used.
+            contexts = batch["context"].to(device)
+            contexts_lengths = batch["context_length"].to(device)
+            responses = batch["response"].to(device)
+            responses_lengths = batch["response_length"].to(device)
+            labels = batch["label"].to(device)
 
-        _, probs = model(contexts,
-                         contexts_lengths,
-                         responses,
-                         responses_lengths)
+            _, probs = model(contexts,
+                             contexts_lengths,
+                             responses,
+                             responses_lengths)
 
-        matching_scores = probs[:, 0] - probs[:, 1]
+            matching_scores = probs[:, 1] - probs[:, 0]
+            sorted_scores, indices = matching_scores.sort(descending=True)
+
+            for i in range(k):
+                if labels[indices[k]] > 0:
+                    running_accuracy += 1
+                    break
+
+        epoch_accuracy = running_accuracy / len(dataloader)
+        epoch_time = time.time() - epoch_start
+
+        return epoch_time, epoch_accuracy

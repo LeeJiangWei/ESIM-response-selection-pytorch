@@ -41,7 +41,7 @@ def preprocess_UDC_data(input_dir,
     # Retrieve the train, dev and test data files from the dataset directory.
     train_file = "ubuntu_train_subtask_1.json"
     dev_file = "ubuntu_dev_subtask_1.json"
-    test_file = "ubuntu_test_subtask_1.json"
+    test_file = "ubuntu_dev_subtask_1.json"
 
     # -------------------- Train data preprocessing -------------------- #
     print(20 * "=", " Preprocessing UDC train data set ", 20 * "=")
@@ -73,6 +73,17 @@ def preprocess_UDC_data(input_dir,
 
     print("* Saving result...")
     with open(os.path.join(target_dir, "udc_dev_data.pkl"), 'wb') as pkl_file:
+        pickle.dump(transformed_data, pkl_file)
+
+    # -------------------- Test data preprocessing -------------------- #
+    print(20 * "=", " Preprocessing UDC test data set ", 20 * "=")
+    print("* Reading data...")
+    data = preprocessor.read_udc(os.path.join(input_dir, test_file), sample_size=0)
+
+    transformed_data = preprocessor.transform_to_indices(data)
+
+    print("* Saving result...")
+    with open(os.path.join(target_dir, "udc_test_data.pkl"), 'wb') as pkl_file:
         pickle.dump(transformed_data, pkl_file)
 
     # -------------------- Embeddings preprocessing -------------------- #

@@ -84,7 +84,7 @@ class Preprocessor(object):
             print(f.readline())
             pass
 
-    def read_udc(self, filepath):
+    def read_udc(self, filepath, sample_size=4):
         """
         Read the contexts, responses and labels from UDC dataset's json
         file and return them in a dictionary.
@@ -136,8 +136,11 @@ class Preprocessor(object):
                 responses.append(response_tokens)
                 labels.append(1)
 
+                if sample_size <= 0:
+                    sample_size = len(example["options-for-next"])
+
                 # random select 4 negative example for same context
-                for negative_turn in np.random.choice(example["options-for-next"], 4):
+                for negative_turn in np.random.choice(example["options-for-next"], sample_size):
                     if gt_id == negative_turn["candidate-id"]:
                         continue
 

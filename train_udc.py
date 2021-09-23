@@ -13,7 +13,7 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 from esim.model import ESIM
 from esim.data import DialogueDataset
-from utils import train, validate
+from utils import train, validate, test
 
 
 def main(train_file,
@@ -29,6 +29,7 @@ def main(train_file,
          lr=0.0004,
          patience=5,
          max_grad_norm=10.0,
+         k=1,
          checkpoint=None):
     """
     Train the ESIM model on the UDC dataset.
@@ -74,11 +75,11 @@ def main(train_file,
 
     valid_loader = DataLoader(valid_data, shuffle=False, batch_size=batch_size)
 
-    # print("\t* Loading test data...")
-    # with open(test_file, "rb") as pkl:
-    #     valid_data = DialogueDataset(pickle.load(pkl))
-    #
-    # valid_loader = DataLoader(valid_data, shuffle=False, batch_size=batch_size)
+    print("\t* Loading test data...")
+    with open(test_file, "rb") as pkl:
+        test_data = DialogueDataset(pickle.load(pkl))
+
+    test_loader = DataLoader(test_data, shuffle=False, batch_size=100)
 
     # -------------------- Model definition ------------------- #
     print("\t* Building model...")
@@ -155,6 +156,11 @@ def main(train_file,
         print("-> Valid. time: {:.4f}s, loss: {:.4f}, accuracy: {:.4f}%\n"
               .format(epoch_time, epoch_loss, (epoch_accuracy * 100)))
 
+        print("* Testing for epoch {}:".format(epoch))
+        epoch_time, epoch_accuracy = test(model, test_loader, k)
+        print("-> Testing time: {:.4f}s, recall at {:d}: {:.4f}%\n"
+              .format(epoch_time, k, (epoch_accuracy * 100)))
+
         # Update the optimizer's learning rate with the scheduler.
         scheduler.step(epoch_accuracy)
 
@@ -203,7 +209,7 @@ def main(train_file,
 
 if __name__ == "__main__":
     main(
-        train_file="tmp/udc_dev_data.pkl",
+        train_file="tmp/udc_train_data.pkl",
         valid_file="tmp/udc_dev_data.pkl",
         test_file="tmp/udc_dev_data.pkl",
         embeddings_file="tmp/embeddings.pkl",
