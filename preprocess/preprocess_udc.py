@@ -95,8 +95,8 @@ def preprocess_UDC_data(input_dir,
 
 
 if __name__ == '__main__':
-    data_dir = "dataset/udc/"
-    out_dir = "./tmp"
+    data_dir = "../dataset/udc/"
+    out_dir = "../tmp"
     preprocess_UDC_data(input_dir=data_dir,
-                        embeddings_file=".",
+                        embeddings_file="..",
                         target_dir=out_dir)

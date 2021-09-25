@@ -23,7 +23,7 @@ class ESIM(nn.Module):
                  embeddings=None,
                  padding_idx=0,
                  dropout=0.5,
-                 num_classes=3,
+                 num_classes=2,
                  device="cpu"):
         """
         Args:

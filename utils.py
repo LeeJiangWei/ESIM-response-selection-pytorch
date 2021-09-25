@@ -23,6 +23,19 @@ def correct_predictions(output_probabilities, targets):
     return correct.item()
 
 
+def recall_at_k(scores, labels, gt=1, k=1):
+    total = labels.count(gt)
+    appeared_at_k = 0
+
+    _, indices = scores.sort(descending=True)
+
+    for i in range(k):
+        if labels[indices[i]] == gt:
+            appeared_at_k += 1
+
+    return appeared_at_k / total
+
+
 def train(model, dataloader, optimizer, criterion, epoch_number, max_gradient_norm):
     """
     Train a model for one epoch on some input data with a given optimizer and

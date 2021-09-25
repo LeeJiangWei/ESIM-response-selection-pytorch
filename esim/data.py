@@ -2,6 +2,7 @@
 Preprocessor and dataset definition for dialogue.
 """
 
+import re
 import json
 import string
 from collections import Counter
@@ -80,9 +81,36 @@ class Preprocessor(object):
             A dictionary containing three lists, one for the contexts, one for
             the responses, and one for the labels in the input data.
         """
+
+        # match all zh char, en char, number and whitespace
+        regex = re.compile(r'[^\u4E00-\u9FA5A-Za-z0-9 ]+')
+
         with open(filepath, "r", encoding="utf8") as f:
-            print(f.readline())
-            pass
+            contexts, responses, labels = [], [], []
+
+            for line in f:
+                line = line.strip().split("\t")
+
+                context = " __eou__ __eot__ ".join(line[1:-1]) + " __eou__ __eot__"
+                response = line[-1]
+                label = int(line[0])
+
+                # replace special tokens
+                context = regex.sub("", context)
+                response = regex.sub("", response)
+
+                # tokenize text
+                context_tokens = self.whitespace_tokenize(context)
+                response_tokens = self.whitespace_tokenize(response)
+
+                # add a sample
+                contexts.append(context_tokens)
+                responses.append(response_tokens)
+                labels.append(label)
+
+            return {"contexts": contexts,
+                    "responses": responses,
+                    "labels": labels}
 
     def read_udc(self, filepath, sample_size=4):
         """
@@ -411,7 +439,7 @@ e                Defaults to None.
 
         for i, context in enumerate(data["contexts"]):
             end = min(len(context), self.max_context_length)
-            self.data["contexts"][i][:end] = torch.tensor(context[:end])  # cut context in reverse direction
+            self.data["contexts"][i][:end] = torch.tensor(context[-end:])  # cut context in reverse direction
 
             response = data["responses"][i]
             end = min(len(response), self.max_response_length)
