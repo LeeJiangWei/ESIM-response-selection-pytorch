@@ -123,8 +123,6 @@ def main(train_file,
         train_losses = checkpoint["train_losses"]
         valid_losses = checkpoint["valid_losses"]
 
-    test(model, test_loader)
-
     # Compute loss and accuracy before starting (or resuming) training.
     _, valid_loss, valid_accuracy = validate(model, valid_loader, criterion)
     print("\t* Validation loss before training: {:.4f}, accuracy: {:.4f}%"
@@ -209,9 +207,9 @@ def main(train_file,
 
 if __name__ == "__main__":
     main(
-        train_file="tmp/udc_train_data.pkl",
-        valid_file="tmp/udc_dev_data.pkl",
-        test_file="tmp/udc_test_data.pkl",
-        embeddings_file="tmp/embeddings.pkl",
-        target_dir="tmp/out",
+        train_file="tmp/udc/udc_train_data.pkl",
+        valid_file="tmp/udc/udc_dev_data.pkl",
+        test_file="tmp/udc/udc_test_data.pkl",
+        embeddings_file="tmp/udc/embeddings.pkl",
+        target_dir="tmp/udc_out",
     )

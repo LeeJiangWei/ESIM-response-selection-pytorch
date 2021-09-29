@@ -134,7 +134,7 @@ if __name__ == '__main__':
     #                       "../dataset/udc/ubuntu_responses_subtask_1.tsv")
 
     data_dir = "../dataset/udc/"
-    out_dir = "../tmp"
+    out_dir = "../tmp/udc"
 
     preprocess_UDC_data(input_dir=data_dir,
                         target_dir=out_dir)

@@ -68,7 +68,7 @@ def main(test_file,
 
 if __name__ == "__main__":
     main(
-        test_file="tmp/udc_test_data.pkl",
-        embeddings_file="tmp/embeddings.pkl",
-        checkpoint="./tmp/out/best.pth.tar"
+        test_file="tmp/udc/udc_test_data.pkl",
+        embeddings_file="tmp/udc/embeddings.pkl",
+        checkpoint="./tmp/udc_out/best.pth.tar"
     )
