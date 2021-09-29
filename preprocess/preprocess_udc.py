@@ -1,10 +1,46 @@
 import os
+import json
 import pickle
+from tqdm import tqdm
+
 from esim.data import Preprocessor
 
 
+def transform_UDC_testset(test_file, label_file):
+    """
+    Transform UDC test set with labels so that it has the same structure as
+    training data and dev data.
+
+    Args:
+        test_file: The path to the test data file.
+        label_file: The path to the test label file.
+    """
+    true_responses = []
+    with open(label_file, encoding="utf8") as f:
+        for line in f:
+            line = line.strip().split("\t")
+
+            true_responses.append({
+                "example-id": int(line[0]),
+                "candidate-id": line[1],
+                "utterance": line[2]
+            })
+
+    with open(test_file, encoding="utf8") as f:
+        examples = json.load(f)
+        for index, example in enumerate(tqdm(examples)):
+            assert example["example-id"] == true_responses[index]["example-id"]
+
+            example["options-for-correct-answers"] = [{
+                "candidate-id": true_responses[index]["candidate-id"],
+                "utterance": true_responses[index]["utterance"]
+            }]
+
+        with open("../dataset/udc/transformed_ubuntu_test.json", "w", encoding="utf8") as o:
+            json.dump(examples, o, indent=4)
+
+
 def preprocess_UDC_data(input_dir,
-                        embeddings_file,
                         target_dir,
                         lowercase=False,
                         ignore_punctuation=False,
@@ -12,7 +48,7 @@ def preprocess_UDC_data(input_dir,
                         stopwords=[],
                         labeldict={}):
     """
-    Preprocess the data from the SNLI corpus so it can be used by the
+    Preprocess the data from the UDC corpus so it can be used by the
     ESIM model.
     Compute a worddict from the train set, and transform the words in
     the sentences of the corpus to their indices, as well as the labels.
@@ -21,12 +57,11 @@ def preprocess_UDC_data(input_dir,
 
     Args:
         input_dir: The path to the directory containing the dialogue corpus.
-        embeddings_file: The path to the file containing the pretrained
             word vectors that must be used to build the embedding matrix.
         target_dir: The path to the directory where the preprocessed data
             must be saved.
         lowercase: Boolean value indicating whether to lowercase the contexts
-            and responses in the input data. Defautls to False.
+            and responses in the input data. Defaults to False.
         ignore_punctuation: Boolean value indicating whether to remove
             punctuation from the input data. Defaults to False.
         num_words: Integer value indicating the size of the vocabulary to use
@@ -41,7 +76,7 @@ def preprocess_UDC_data(input_dir,
     # Retrieve the train, dev and test data files from the dataset directory.
     train_file = "ubuntu_train_subtask_1.json"
     dev_file = "ubuntu_dev_subtask_1.json"
-    test_file = "ubuntu_dev_subtask_1.json"
+    test_file = "transformed_ubuntu_test.json"
 
     # -------------------- Train data preprocessing -------------------- #
     print(20 * "=", " Preprocessing UDC train data set ", 20 * "=")
@@ -67,7 +102,7 @@ def preprocess_UDC_data(input_dir,
     # -------------------- Validation data preprocessing -------------------- #
     print(20 * "=", " Preprocessing UDC validation data set ", 20 * "=")
     print("* Reading data...")
-    data = preprocessor.read_udc(os.path.join(input_dir, dev_file))
+    data = preprocessor.read_udc(os.path.join(input_dir, dev_file), sample_size=0)
 
     transformed_data = preprocessor.transform_to_indices(data)
 
@@ -95,8 +130,11 @@ def preprocess_UDC_data(input_dir,
 
 
 if __name__ == '__main__':
+    # transform_UDC_testset("../dataset/udc/ubuntu_test_subtask_1.json",
+    #                       "../dataset/udc/ubuntu_responses_subtask_1.tsv")
+
     data_dir = "../dataset/udc/"
     out_dir = "../tmp"
+
     preprocess_UDC_data(input_dir=data_dir,
-                        embeddings_file="..",
                         target_dir=out_dir)

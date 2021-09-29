@@ -2,17 +2,15 @@
 Utility functions for training and validating models.
 """
 import os
-import time
-import torch
 import pickle
 
+import torch
 import torch.nn as nn
-from matplotlib import pyplot as plt
-from tqdm import tqdm
-
 from torch.utils.data import DataLoader
-from esim.model import ESIM
+from matplotlib import pyplot as plt
+
 from esim.data import DialogueDataset
+from esim.model import ESIM
 from utils import train, validate, test
 
 
@@ -125,6 +123,8 @@ def main(train_file,
         train_losses = checkpoint["train_losses"]
         valid_losses = checkpoint["valid_losses"]
 
+    test(model, test_loader)
+
     # Compute loss and accuracy before starting (or resuming) training.
     _, valid_loss, valid_accuracy = validate(model, valid_loader, criterion)
     print("\t* Validation loss before training: {:.4f}, accuracy: {:.4f}%"
@@ -157,9 +157,9 @@ def main(train_file,
               .format(epoch_time, epoch_loss, (epoch_accuracy * 100)))
 
         print("* Testing for epoch {}:".format(epoch))
-        epoch_time, epoch_accuracy = test(model, test_loader, k)
-        print("-> Testing time: {:.4f}s, recall at {:d}: {:.4f}%\n"
-              .format(epoch_time, k, (epoch_accuracy * 100)))
+        epoch_time, recall = test(model, test_loader, k)
+        print("-> Testing time: {:.4f}s, recall@{:d}: {:.4f}%\n"
+              .format(epoch_time, k, (recall * 100)))
 
         # Update the optimizer's learning rate with the scheduler.
         scheduler.step(epoch_accuracy)
@@ -211,7 +211,7 @@ if __name__ == "__main__":
     main(
         train_file="tmp/udc_train_data.pkl",
         valid_file="tmp/udc_dev_data.pkl",
-        test_file="tmp/udc_dev_data.pkl",
+        test_file="tmp/udc_test_data.pkl",
         embeddings_file="tmp/embeddings.pkl",
         target_dir="tmp/out",
     )

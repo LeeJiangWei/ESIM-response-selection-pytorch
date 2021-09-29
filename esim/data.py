@@ -120,6 +120,7 @@ class Preprocessor(object):
         Args:
             filepath: The path to a file containing some contexts, responses
                 and labels that must be read.
+            sample_size: The size of negative sample responses in training set.
 
         Returns:
             A dictionary containing three lists, one for the contexts, one for

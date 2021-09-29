@@ -23,14 +23,23 @@ def correct_predictions(output_probabilities, targets):
     return correct.item()
 
 
-def recall_at_k(scores, labels, gt=1, k=1):
-    total = labels.count(gt)
+def recall_at_k(scores, labels, k=1):
+    """
+    Given a list of rank scores and ground truth labels, calculate recall ak k.
+
+    Args:
+        scores: Tensor of matching scores.
+        labels: List of label corresponding to scores.
+        k: How often correct predict appear on top k.
+        gt: Ground truth label value.
+    """
+    total = torch.count_nonzero(labels)
     appeared_at_k = 0
 
     _, indices = scores.sort(descending=True)
 
     for i in range(k):
-        if labels[indices[i]] == gt:
+        if labels[indices[i]] > 0:
             appeared_at_k += 1
 
     return appeared_at_k / total
@@ -172,7 +181,7 @@ def test(model, dataloader, k=1):
     device = model.device
 
     epoch_start = time.time()
-    running_accuracy = 0.0
+    accumulated_recall = 0.0
 
     # Deactivate autograd for evaluation.
     with torch.no_grad():
@@ -190,14 +199,11 @@ def test(model, dataloader, k=1):
                              responses_lengths)
 
             matching_scores = probs[:, 1] - probs[:, 0]
-            sorted_scores, indices = matching_scores.sort(descending=True)
 
-            for i in range(k):
-                if labels[indices[k]] > 0:
-                    running_accuracy += 1
-                    break
+            batch_recall = recall_at_k(matching_scores, labels, k)
+            accumulated_recall += batch_recall
 
-        epoch_accuracy = running_accuracy / len(dataloader)
+        avg_recall = accumulated_recall / len(dataloader)
         epoch_time = time.time() - epoch_start
 
-        return epoch_time, epoch_accuracy
+        return epoch_time, avg_recall
