@@ -34,6 +34,9 @@ def recall_at_k(scores, labels, k=1):
         gt: Ground truth label value.
     """
     total = torch.count_nonzero(labels)
+    if total == 0:
+        return 0
+
     appeared_at_k = 0
 
     _, indices = scores.sort(descending=True)

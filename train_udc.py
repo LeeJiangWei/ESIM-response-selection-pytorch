@@ -155,8 +155,12 @@ def main(train_file,
               .format(epoch_time, epoch_loss, (epoch_accuracy * 100)))
 
         print("* Testing for epoch {}:".format(epoch))
+        epoch_time, epoch_loss, epoch_accuracy = validate(model, test_loader, criterion)
+
+        print("-> Testing time: {:.4f}s, loss: {:.4f}, accuracy: {:.4f}%\n"
+              .format(epoch_time, epoch_loss, (epoch_accuracy * 100)))
         epoch_time, recall = test(model, test_loader, k)
-        print("-> Testing time: {:.4f}s, recall@{:d}: {:.4f}%\n"
+        print("-> Recall time: {:.4f}s, recall@{:d}: {:.4f}%\n"
               .format(epoch_time, k, (recall * 100)))
 
         # Update the optimizer's learning rate with the scheduler.
